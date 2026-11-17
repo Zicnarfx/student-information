@@ -34,11 +34,26 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   bool _hideCurrentPassword = true;
   bool _hideNewPassword = true;
 
+  // SHOW/HIDE PASSWORD FORM
+  bool _showPasswordForm = false;
+
   @override
   void dispose() {
     _currentPassword.dispose();
     _newPassword.dispose();
     super.dispose();
+  }
+
+  // CLOSE AND CLEAR PASSWORD FORM
+  void _closePasswordForm() {
+    setState(() {
+      _showPasswordForm = false;
+      _currentPassword.clear();
+      _newPassword.clear();
+      _hideCurrentPassword = true;
+      _hideNewPassword = true;
+      _formKey.currentState?.reset();
+    });
   }
 
   // SUCCESS POPUP
@@ -155,6 +170,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       );
 
       await user.reauthenticateWithCredential(credential);
+
       await user.updatePassword(_newPassword.text.trim());
 
       _currentPassword.clear();
@@ -162,7 +178,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
       if (!mounted) return;
 
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _showPasswordForm = false;
+        _hideCurrentPassword = true;
+        _hideNewPassword = true;
+      });
 
       await _showSuccessDialog();
     } on FirebaseAuthException catch (e) {
@@ -508,6 +529,239 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     );
   }
 
+  // CHANGE PASSWORD SECTION
+  Widget _buildChangePasswordSection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withOpacity(0.16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // CLICKABLE CHANGE PASSWORD HEADER
+          InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              setState(() {
+                if (_showPasswordForm) {
+                  if (!_loading) {
+                    _closePasswordForm();
+                  }
+                } else {
+                  _showPasswordForm = true;
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(11),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.lock_reset_rounded,
+                      color: accentColor,
+                      size: 25,
+                    ),
+                  ),
+
+                  const SizedBox(width: 13),
+
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Change Password',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Update your account password.',
+                          style: TextStyle(
+                            color: mutedColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Icon(
+                    _showPasswordForm
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: accentColor,
+                    size: 28,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // EXPANDABLE PASSWORD FORM
+          if (_showPasswordForm) ...[
+            Divider(
+              color: accentColor.withOpacity(0.20),
+              height: 1,
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Enter your password details below.',
+                      style: TextStyle(
+                        color: mutedColor,
+                        fontSize: 12,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _passwordField(
+                      controller: _currentPassword,
+                      label: 'Current Password',
+                      obscureText: _hideCurrentPassword,
+                      onVisibilityToggle: () {
+                        setState(() {
+                          _hideCurrentPassword =
+                              !_hideCurrentPassword;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    _passwordField(
+                      controller: _newPassword,
+                      label: 'New Password',
+                      obscureText: _hideNewPassword,
+                      onVisibilityToggle: () {
+                        setState(() {
+                          _hideNewPassword =
+                              !_hideNewPassword;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 15,
+                          color: mutedColor,
+                        ),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Use at least 6 characters for your new password.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: mutedColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed:
+                            _loading ? null : _changePassword,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: _loading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.save_rounded),
+                                  SizedBox(width: 9),
+                                  Text(
+                                    'Update Password',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 45,
+                      child: TextButton(
+                        onPressed: _loading
+                            ? null
+                            : _closePasswordForm,
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: mutedColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   // BUILD PAGE
   @override
   Widget build(BuildContext context) {
@@ -515,6 +769,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -526,6 +781,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 isLandscape ? 32.0 : 20.0;
 
             return SingleChildScrollView(
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalPadding,
                 vertical: 20,
@@ -536,7 +793,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     maxWidth: 850,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 14),
 
@@ -555,160 +813,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                       _sectionTitle('Security'),
                       const SizedBox(height: 14),
 
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: accentColor.withOpacity(0.16),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.lock_reset_rounded,
-                                    color: accentColor,
-                                    size: 24,
-                                  ),
-                                  SizedBox(width: 9),
-                                  Text(
-                                    'Change Password',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              const Text(
-                                'Update your password to keep your account secure.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: mutedColor,
-                                  height: 1.5,
-                                ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              _passwordField(
-                                controller: _currentPassword,
-                                label: 'Current Password',
-                                obscureText:
-                                    _hideCurrentPassword,
-                                onVisibilityToggle: () {
-                                  setState(() {
-                                    _hideCurrentPassword =
-                                        !_hideCurrentPassword;
-                                  });
-                                },
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              _passwordField(
-                                controller: _newPassword,
-                                label: 'New Password',
-                                obscureText: _hideNewPassword,
-                                onVisibilityToggle: () {
-                                  setState(() {
-                                    _hideNewPassword =
-                                        !_hideNewPassword;
-                                  });
-                                },
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 15,
-                                    color: mutedColor,
-                                  ),
-                                  SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'Use at least 6 characters for your new password.',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: mutedColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 22),
-
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: _loading
-                                      ? null
-                                      : _changePassword,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor,
-                                    foregroundColor: Colors.white,
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(14),
-                                    ),
-                                  ),
-                                  child: _loading
-                                      ? const SizedBox(
-                                          height: 22,
-                                          width: 22,
-                                          child:
-                                              CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.save_rounded),
-                                            SizedBox(width: 9),
-                                            Text(
-                                              'Update Password',
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight:
-                                                    FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildChangePasswordSection(),
 
                       const SizedBox(height: 28),
 
@@ -734,13 +839,14 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                               ? const SizedBox(
                                   height: 18,
                                   width: 18,
-                                  child:
-                                      CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: accentColor,
                                   ),
                                 )
-                              : const Icon(Icons.logout_rounded),
+                              : const Icon(
+                                  Icons.logout_rounded,
+                                ),
                           label: Text(
                             _loggingOut
                                 ? 'Logging out...'
