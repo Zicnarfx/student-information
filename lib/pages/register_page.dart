@@ -596,9 +596,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             ),
                                           ),
                                           SizedBox(width: 10),
-                                          Icon(
-                                            Icons.arrow_forward_rounded,
-                                          ),
+                                        
                                         ],
                                       ),
                               ),
@@ -641,7 +639,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 12),
 
                     const Text(
-                      'STUDENT INFORMATION SYSTEM',
+                      'STUDENT INFORMATION MOBILE APP',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,

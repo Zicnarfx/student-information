@@ -22,11 +22,26 @@ class _StudentsPageState extends State<StudentsPage> {
   final TextEditingController _searchController =
       TextEditingController();
 
+  final FocusNode _searchFocusNode = FocusNode();
+
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for search field focus changes.
+    _searchFocusNode.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -125,7 +140,7 @@ class _StudentsPageState extends State<StudentsPage> {
         horizontalPadding,
         verticalPadding,
         horizontalPadding,
-        compact ? 5 : 12,
+        compact ? 2 : 12,
       ),
       decoration: BoxDecoration(
         color: StudentsPage.cardColor,
@@ -136,6 +151,7 @@ class _StudentsPageState extends State<StudentsPage> {
       ),
       child: TextField(
         controller: _searchController,
+        focusNode: _searchFocusNode,
         textInputAction: TextInputAction.search,
         maxLines: 1,
         style: const TextStyle(
@@ -176,7 +192,7 @@ class _StudentsPageState extends State<StudentsPage> {
           fillColor: StudentsPage.cardColor,
           isDense: true,
           contentPadding: EdgeInsets.symmetric(
-            vertical: compact ? 7 : 14,
+            vertical: compact ? 3 : 14,
             horizontal: 12,
           ),
           border: OutlineInputBorder(
@@ -429,18 +445,22 @@ class _StudentsPageState extends State<StudentsPage> {
         .collection('students');
 
     final mediaQuery = MediaQuery.of(context);
+
     final isLandscape =
         mediaQuery.orientation == Orientation.landscape;
-    final keyboardIsOpen = mediaQuery.viewInsets.bottom > 0;
 
-    // Use compact layout only when keyboard is open in landscape.
-    final compactLayout = isLandscape && keyboardIsOpen;
+    final keyboardIsOpen =
+        mediaQuery.viewInsets.bottom > 0;
+
+    // COMPACT LANDSCAPE LAYOUT
+    final compactLayout = isLandscape &&
+        (keyboardIsOpen || _searchFocusNode.hasFocus);
 
     return Scaffold(
       backgroundColor: StudentsPage.backgroundColor,
       resizeToAvoidBottomInset: true,
 
-      // Hide AppBar while typing in landscape.
+      // Hide AppBar when searching in landscape.
       appBar: compactLayout
           ? null
           : AppBar(
@@ -461,7 +481,7 @@ class _StudentsPageState extends State<StudentsPage> {
             ),
 
       // Hide Add Student button while keyboard is open
-      // in landscape to save vertical space.
+      // or search field is focused in landscape.
       floatingActionButton: compactLayout
           ? null
           : FloatingActionButton.extended(
@@ -491,7 +511,8 @@ class _StudentsPageState extends State<StudentsPage> {
             final horizontalPadding =
                 constraints.maxWidth > 700 ? 28.0 : 16.0;
 
-            final verticalPadding = compactLayout ? 3.0 : 18.0;
+            final verticalPadding =
+                compactLayout ? 2.0 : 18.0;
 
             return Center(
               child: ConstrainedBox(
@@ -532,7 +553,8 @@ class _StudentsPageState extends State<StudentsPage> {
                             );
                           }
 
-                          final docs = snapshot.data?.docs ?? [];
+                          final docs =
+                              snapshot.data?.docs ?? [];
 
                           if (docs.isEmpty) {
                             return _buildEmptyState(

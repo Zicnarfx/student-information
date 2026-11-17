@@ -481,7 +481,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
-                  'Student Information System',
+                  'Student Information Management',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 11,
